@@ -1,0 +1,4 @@
+├── /src                     # Código fuente
+│   ├── preprocesamiento.py  # Scripts para generar espectrogramas, etc.
+│   ├── modelo_cnn.py        # Definición y entrenamiento del modelo CNN
+│   └── inferencia.py        # Predicciones con el modelo entrenado
