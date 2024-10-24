@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  # Se ejecuta en cada push o pull request a la rama 'main'
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  
+  # Permite ejecutar manualmente desde la pestaña de Actions
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Cambiamos el runner a Windows
+    runs-on: windows-latest
+
+    steps:
+    # 1. Checkout del repositorio
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    # 2. Configuración de Python en Windows
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # 3. Instalar dependencias en Windows
+    - name: Install dependencies
+      run: |
+        python -m venv .venv
+        .venv\Scripts\activate
+        pip install -r requirements.txt
+
+    # 4. Ejecutar pruebas o comandos en Windows
+    - name: Run a test script
+      run: |
+        .venv\Scripts\activate
+        python -c "print('El entorno en Windows se ha configurado correctamente')"
