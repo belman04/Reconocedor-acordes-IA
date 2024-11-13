@@ -3,12 +3,7 @@ import librosa as lib                                    # procesamiento de audi
 import tensorflow as tf                                   # crear y entrenar modelo de red neuronal
 import pandas as pd                                       # manejo de datos
 
-
-def tomar_etiquetas(ruta_etiquetas):
-    etiquetas_df = pd.read_csv(ruta_etiquetas)  # leer  CSV de etiquetas
-    # Crear un diccionario que mapea índices a acordes
-    acorde_mapping = dict(zip(etiquetas_df.index, etiquetas_df['etiquetas']))
-    return acorde_mapping
+dic_acordes = {0: "C", 1: "F", 2: "G"}
 
 
 def tomar_modelo(ruta_modelo):
@@ -22,7 +17,7 @@ def tomar_modelo(ruta_modelo):
         raise  # Vuelve a lanzar la excepción
 
 
-def predecir(ruta_audio, modelo, acorde_mapping):
+def predecir(ruta_audio, modelo):
     print(f"Cargando archivo de audio desde: {ruta_audio}")  # Imprimir ruta
     try:
         audio, sr = lib.load(ruta_audio, sr=None)  # cargar el archivo de audio
@@ -45,18 +40,16 @@ def predecir(ruta_audio, modelo, acorde_mapping):
         mfccs = np.pad(mfccs, ((0, 0), (0, padding_width)), 'constant')  # Rellenar con ceros
 
     mfccs = np.expand_dims(mfccs, axis=-1)  # Añadir una dimensión para cumplir con la forma (13, 173, 1)
-    mfccs = mfccs.reshape(1, 13, desired_length, 1)  # Cambiar la forma a (1, 13, 173, 1)
+    # mfccs = mfccs.reshape(1, 13, desired_length, 1)  # Cambiar la forma a (1, 13, 173, 1)
 
-    prediccion = modelo.predict(mfccs)  # predecir la clase del acorde
+    prediccion = modelo.predict(np.expand_dims(mfccs, axis=0))  # Añadir la dimensión de batch (1, 13, 173, 1)
     clase_predecida = np.argmax(prediccion, axis=1)[0]  # obtener la clase con mayor probabilidad
 
-    # Usar el mapeo de etiquetas que has cargado
-    acorde = acorde_mapping.get(clase_predecida, "Desconocido")
-    return acorde
+    acorde_predecido = dic_acordes[clase_predecida]  # obtener la etiqueta correspondiente
+    return acorde_predecido
 
 
 if __name__ == "__main__":
-    modelo = tomar_modelo("modelos/modelo.keras")       # cargar el modelo
-    acorde_mapping = tomar_etiquetas("../datos/etiquetas.csv")  # cargar el mapeo de acordes
-    acorde = predecir("../datos/F_prueba.wav", modelo, acorde_mapping)   # predecir el acorde
+    modelo = tomar_modelo("modelos/modelo_7.keras")       # cargar el modelo
+    acorde = predecir("../datos/acordes/F/audio(10).wav", modelo)   # predecir el acorde
     print("Acorde predecido:", acorde)
