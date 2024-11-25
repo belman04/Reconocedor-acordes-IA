@@ -3,6 +3,7 @@ import librosa as lib             # procesamiento de audio
 import numpy as np                # manejo de matrices
 import pandas as pd               # manejo de datos
 
+
 def tomar_datos(ruta_datos):
     a, b = [], []  # listas para guardar MFCCs y etiquetas
     
@@ -32,10 +33,10 @@ def tomar_datos(ruta_datos):
             mfccs = lib.feature.mfcc(y=audio, sr=sr, n_mfcc=13)
             
             # Rellenar los MFCCs para que tengan una longitud fija
-            if mfccs.shape[1] < 173:  # Suponiendo que 173 es la longitud deseada
-                mfccs = np.pad(mfccs, ((0, 0), (0, 173 - mfccs.shape[1])), mode='constant')
-            elif mfccs.shape[1] > 173:
-                mfccs = mfccs[:, :173]  # Truncar si es más largo
+            if mfccs.shape[1] < 200 :  # Suponiendo que 200 es la longitud deseada
+                mfccs = np.pad(mfccs, ((0, 0), (0, 200 - mfccs.shape[1])), mode='constant')
+            elif mfccs.shape[1] > 200 :
+                mfccs = mfccs[:, :200 ]  # Truncar si es más largo
             
             a.append(mfccs)  # agregar MFCCs a la lista
             b.append(row["etiquetas"])  # agregar etiqueta a la lista

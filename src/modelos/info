@@ -1,9 +1,20 @@
 modelo.keras fue la prueba de que la ia funcionaba
 
+Con 3 acordes y 3 capas
 modelo_1.keras 10 epocas
 modelo_2.keras 50 epocas
 modelo_3.keras 2do entrenamiento 50 epocas
 modelo_4.keras correccion de errores 
 modelo_5.keras asignar acordes a los valores 0,1,2
 modelo_6.keras correccion de errores
-modelo_7.keras 100 epocas 
+modelo_7.keras 100 epocas
+
+Ya con 15 acordes y 3 capas
+modelo_8.keras 100 epocas, 54%
+modelo_9.keras 200 epocas, llego a 46, 80%
+modelo_10.keras 200 epocas, llego a 66, 79% 
+modelo_11.keras 150 epocas, llego a 43, 80% 
+
+Ya con 15 acordes y 4 capas
+modelo_12.keras 150 epocas, llego a X, X% 
+modelo_13.keras 150 epocas, llego a 120, 83% 

@@ -3,35 +3,144 @@ import numpy as np                                          # manejo de matrices
 import tensorflow as tf                                     # crear y entrenar modelo de red neuronal
 import pandas as pd                                         # manejo de datos
 from sklearn.model_selection import train_test_split as tts # dividir datos en entrenamiento y prueba
-import preprocesamiento as prep
+from sklearn.preprocessing import StandardScaler            # escalar los datos
+from sklearn.metrics import classification_report, confusion_matrix # evaluar el modelo
+import matplotlib.pyplot as plt                             # visualización de datos
+import seaborn as sns                                       # visualización de datos
+import preprocesamiento as prep                             # preprocesamiento de datos
 
-dic_acordes = {0: "C", 1: "F", 2: "G"}
+# diccionario de acordes
+dic_acordes = {0: "A", 1: "Am", 2: "B", 3: "Bb", 4: "Bm", 5: "C", 6: "Cm", 7: "D", 8: "Dm", 9: "E", 10: "Em", 11: "F", 12: "Fm", 13: "G", 14: "Gm"}
 
 def crear_modelo(input_shape, num_classes):
     modelo = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=input_shape),  # Usar Input(shape) como la primera capa
+        tf.keras.layers.Input(shape=input_shape),  # usar Input(shape) como la primera capa
         # primera capa convolucional, extrae caracteristicas del espectograma
-        tf.keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)),        
-        # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
-        tf.keras.layers.MaxPooling2D((2, 2)), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
+        tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same'),
+        tf.keras.layers.BatchNormalization(), # capa de normalización
+        tf.keras.layers.MaxPooling2D((2, 2), padding='same'), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
         
         # segunda capa convolucional, extrae caracteristicas del espectograma
-        tf.keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
-        # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
-        tf.keras.layers.MaxPooling2D((2, 2)), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
+        tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same'),
+        tf.keras.layers.BatchNormalization(), # capa de normalización
+        tf.keras.layers.MaxPooling2D((2, 2), padding='same'), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
         
         # tercera capa convolucional, extrae caracteristicas del espectograma
-        tf.keras.layers.Conv2D(256, (3, 3), activation='relu', padding='same', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
-        # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
-        tf.keras.layers.MaxPooling2D((2, 2)), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
+        tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same'),
+        tf.keras.layers.BatchNormalization(), # capa de normalización
+        tf.keras.layers.MaxPooling2D((2, 2), padding='same'), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
+
+        # cuarta capa convolucional, extrae caracteristicas del espectograma
+        tf.keras.layers.Conv2D(512, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same'),
+        tf.keras.layers.BatchNormalization(), # capa de normalización
+        tf.keras.layers.MaxPooling2D((1, 2), padding='same'), # capa de agrupación (submuestreo) reduce las dimensiones de la salida anterior
       
         tf.keras.layers.Flatten(),                               # capa de aplanamiento, convierte la salida anterior en un vector
         tf.keras.layers.Dropout(0.5),                            # capa de dropout, previene el sobreajuste
-        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+        tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.1)), # aumentar a 0.1 si no mejora
+        tf.keras.layers.Dropout(0.3),                            # capa de dropout, previene el sobreajuste
         tf.keras.layers.Dense(num_classes, activation='softmax') # capa de salida, clasifica las entradas en las clases 
         #softmax es una función de activación que convierte las salidas en probabilidades
     ])
     return modelo
+
+
+# Función para graficar entrenamiento
+def graficar_entrenamiento(history):
+    plt.figure(figsize=(12, 6))
+    plt.plot(history.history['loss'], label='Training Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss')
+    plt.legend()
+    plt.show()
+
+# Función para graficar la precisión y la pérdida durante el entrenamiento
+def graficar_precision_perdida(history):
+    plt.figure(figsize=(12, 6))
+
+    # Graficar Pérdida
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history['loss'], label='Training Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training and Validation Loss')
+    plt.legend()
+
+    # Graficar Precisión
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history['accuracy'], label='Training Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+# Función para mostrar matriz de confusión
+def mostrar_matriz_confusion(b_test, predicciones_clase, dic_acordes):
+    cm = confusion_matrix(b_test, predicciones_clase)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, xticklabels=dic_acordes.values(), yticklabels=dic_acordes.values(), cmap="Blues")
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix')
+    plt.show()
+
+
+# Función para graficar la distribución de clases reales y predichas
+def graficar_distribucion_clases(b_test, predicciones_clase, dic_acordes):
+    plt.figure(figsize=(12, 6))
+
+    # Graficar la distribución de clases reales
+    plt.subplot(1, 2, 1)
+    plt.hist(b_test, bins=np.arange(len(dic_acordes)+1)-0.5, alpha=0.7, color='b', rwidth=0.8, label='True Classes')
+    plt.xticks(np.arange(len(dic_acordes)), dic_acordes.values())
+    plt.xlabel('Classes')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of True Classes')
+    plt.legend()
+
+    # Graficar la distribución de clases predichas
+    plt.subplot(1, 2, 2)
+    plt.hist(predicciones_clase, bins=np.arange(len(dic_acordes)+1)-0.5, alpha=0.7, color='g', rwidth=0.8, label='Predicted Classes')
+    plt.xticks(np.arange(len(dic_acordes)), dic_acordes.values())
+    plt.xlabel('Classes')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Predicted Classes')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+    
+# Función para graficar la curva de aprendizaje
+def curva_de_aprendizaje(history):
+    plt.figure(figsize=(12, 6))
+
+    # Pérdida
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history['loss'], label='Training Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Precisión
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history['accuracy'], label='Training Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Training and Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -45,7 +154,9 @@ if __name__ == "__main__":
     print("Aplanando los MFCCs...")
     try:
         a_flat = np.array([x.flatten() for x in a]) # Aplanar los MFCCs
-        print("MFCCs aplanados exitosamente.")
+        scaler = StandardScaler()
+        a_flat = scaler.fit_transform(a_flat)
+        print("MFCCs aplanados y normalizados exitosamente.")
     except Exception as e:
         print(f"Error al aplanar los MFCCs: {e}")
     
@@ -65,7 +176,7 @@ if __name__ == "__main__":
 
     print("Dividiendo datos en conjuntos de entrenamiento y prueba...")
     try:
-        a_train, a_test, b_train, b_test = tts(a, b, test_size=0.2, random_state=42) # Dividir los datos
+        a_train, a_test, b_train, b_test = tts(a, b, test_size=0.2, stratify=b, random_state=42) # Dividir los datos
         print("Datos divididos correctamente en conjuntos de entrenamiento y prueba.")
     except Exception as e:
         print(f"Error al dividir los datos: {e}")
@@ -84,8 +195,13 @@ if __name__ == "__main__":
     print("Entrenando el modelo...")
     try:
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)  # Detener el entrenamiento si no hay mejoras
-        modelo.fit(a_train, b_train, epochs=100, batch_size=32, callbacks=[early_stopping])  # Entrenar el modelo
+        reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=1e-5) # Reducir la tasa de aprendizaje si no hay mejoras
+
+        history = modelo.fit(a_train, b_train, epochs=150, batch_size=32, validation_split=0.2, callbacks=[early_stopping, reduce_lr])
         print("Modelo entrenado exitosamente.")
+        graficar_entrenamiento(history)
+        graficar_precision_perdida(history)
+        curva_de_aprendizaje(history)
     except Exception as e:
         print(f"Error al entrenar el modelo: {e}")
 
@@ -102,34 +218,30 @@ if __name__ == "__main__":
 
     print("Evaluando el modelo...")
     try:
-        test_loss, test_acc = modelo.evaluate(a_test, b_test)  # Evaluar el modelo
+        # Evaluar el modelo
+        test_loss, test_acc = modelo.evaluate(a_test, b_test)
         print("Evaluación completa.")
-        print("Precisión del modelo:", test_acc)
+        print(f"Pérdida en el conjunto de prueba: {test_loss}")
+        print(f"Precisión en el conjunto de prueba: {test_acc}")
         
-        # Hacer las predicciones
+        # Predicciones
         predicciones = modelo.predict(a_test)
         predicciones_clase = np.argmax(predicciones, axis=1)
 
-        # Convertir las predicciones numéricas a los acordes
-        predicciones_acordes = [dic_acordes[pred] for pred in predicciones_clase]
+        # Reporte de clasificación
+        print("Reporte de clasificación:")
+        print(classification_report(b_test, predicciones_clase, target_names=[dic_acordes[i] for i in range(len(dic_acordes))]))
 
-        # Convertir las etiquetas reales numéricas a los acordes
-        etiquetas_reales_acordes = [dic_acordes[etiqueta] for etiqueta in b_test]
+        # Matriz de confusión
+        print("Generando matriz de confusión...")
+        mostrar_matriz_confusion(b_test, predicciones_clase, dic_acordes)
 
-        # Imprimir las clases predichas y reales como acordes
-        print("Acordes predichos por el modelo:", predicciones_acordes)
-        print("Acordes reales en los datos de prueba:", etiquetas_reales_acordes)
-        
-        # Comprobar qué clases están siendo predichas
-        clases_predichas = np.unique(predicciones_acordes)  # Usamos acordes, no índices numéricos
-        clases_reales = np.unique(etiquetas_reales_acordes)  # Igualmente para las reales
-
-        print("Clases predichas por el modelo:", clases_predichas)
-        print("Clases reales en los datos de prueba:", clases_reales)
-
-        clases_no_predichas = np.setdiff1d(clases_reales, clases_predichas)
+        # Comprobar clases no predichas (opcional)
+        clases_predichas = np.unique(predicciones_clase)
+        clases_no_predichas = np.setdiff1d(np.unique(b_test), clases_predichas)
+        graficar_distribucion_clases(b_test, predicciones_clase, dic_acordes)
         if clases_no_predichas.size > 0:
-            print(f"Las siguientes clases no están siendo predichas: {clases_no_predichas}")
+            print(f"Las siguientes clases no están siendo predichas: {[dic_acordes[c] for c in clases_no_predichas]}")
         else:
             print("El modelo está prediciendo todas las clases correctamente.")
     except Exception as e:
