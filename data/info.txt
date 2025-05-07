@@ -1,4 +1,0 @@
-├── /data                   # Archivos de audio, datasets
-│   ├── audio1.wav
-│   ├── audio2.wav
-│   └── ...

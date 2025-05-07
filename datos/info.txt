@@ -1,0 +1,12 @@
+├── /data                   # Archivos de audio, datasets
+│   ├── /acordes
+|   │   ├── acorde_C
+|   │   |   ├── audio1.wav
+│   |   |   ├── audio2.wav
+│   |   |   └── ...
+|   │   ├── acorde_C
+|   │   |   ├── audio1.wav
+│   |   |   ├── audio2.wav
+│   |   |   └── ...
+|   |   └── ...
+|   └── etiquetas.csv       # etiquetas de los acordes

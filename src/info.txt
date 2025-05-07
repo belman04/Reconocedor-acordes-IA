@@ -1,4 +1,4 @@
-├── /src                     # Código fuente
-│   ├── preprocesamiento.py  # Scripts para generar espectrogramas, etc.
-│   ├── modelo_cnn.py        # Definición y entrenamiento del modelo CNN
-│   └── inferencia.py        # Predicciones con el modelo entrenado
+├── /src                     # Código fuente (scripts)
+│   ├── preprocesamiento.py  # Se encargará de cargar el audio y generar espectrogramas o MFCCs
+│   ├── modelo_cnn.py        # Definirá y entrenará del modelo CNN
+│   └── inferencia.py        # Se harán predicciones con el modelo entrenado
